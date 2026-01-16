@@ -2,7 +2,7 @@
   "name": "spanish-flashcards",
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://github.com/KdeeVar/flashcards.git/spanish-flashcards",
+  "homepage": "https://kdeevar.github.io/flashcards/",
   "private": true,
   "engines": {
     "node": ">=20.0.0",
