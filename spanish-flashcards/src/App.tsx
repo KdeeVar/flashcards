@@ -1,682 +1,915 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, RotateCcw, Check, LogOut, User, BarChart3, Clock, Trophy } from 'lucide-react';
-import {FLASH_CARDS} from './flashcards.ts';
+import { ChevronLeft, ChevronRight, RotateCcw, Check, LogOut, User, BarChart3, Clock, Trophy, Globe } from 'lucide-react';
 
-    const SpanishFlashcards = () => {
-        // LocalStorage wrapper for compatibility
-        const storage = {
-            get: async (key: string) => {
-                const value = localStorage.getItem(key);
-                return value ? { value } : null;
-            },
-            set: async (key: string, value: string) => {
-                localStorage.setItem(key, value);
-                return { key, value };
-            },
-            delete: async (key: string) => {
-                localStorage.removeItem(key);
-                return { key, deleted: true };
-            }
-        };
+type Language = 'spanish' | 'canadian';
 
-        const flashcards= FLASH_CARDS
+interface Flashcard {
+    category: string;
+    front: string;
+    back: string;
+    notes: string;
+    emoji: string;
+}
 
-        const [username, setUsername] = useState('');
-        const [isLoggedIn, setIsLoggedIn] = useState(false);
-        const [inputUsername, setInputUsername] = useState('');
-        const [currentCard, setCurrentCard] = useState(0);
-        const [isFlipped, setIsFlipped] = useState(false);
-        const [knownCards, setKnownCards] = useState(new Set());
-        const [filterCategory, setFilterCategory] = useState("All");
-        const [isLoading, setIsLoading] = useState(true);
-        const [showDashboard, setShowDashboard] = useState(false);
-        const [categoryTime, setCategoryTime] = useState<Record<string, number>>({});
-        const [sessionStart, setSessionStart] = useState(Date.now());
-        const [currentCategoryStart, setCurrentCategoryStart] = useState(Date.now());
-        const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+const LanguageFlashcards = () => {
+    // LocalStorage wrapper for compatibility
+    const storage = {
+        get: async (key: string) => {
+            const value = localStorage.getItem(key);
+            return value ? { value } : null;
+        },
+        set: async (key: string, value: string) => {
+            localStorage.setItem(key, value);
+            return { key, value };
+        },
+        delete: async (key: string) => {
+            localStorage.removeItem(key);
+            return { key, deleted: true };
+        }
+    };
 
-        const categories = ["All", ...new Set(flashcards.map(card => card.category))];
+    const spanishFlashcards: Flashcard[] = [
+        // Greetings & Family Basics
+        { category: "Greetings", front: "¿Cómo estás?", back: "How are you? (informal)", notes: "Use with family/friends", emoji: "👋" },
+        { category: "Greetings", front: "¿Cómo está usted?", back: "How are you? (formal)", notes: "Use with elders/respect", emoji: "🙏" },
+        { category: "Greetings", front: "Mucho gusto", back: "Nice to meet you", notes: "", emoji: "🤝" },
+        { category: "Greetings", front: "¿Qué tal?", back: "What's up? / How's it going?", notes: "Very casual", emoji: "😊" },
 
-        const filteredCards = filterCategory === "All"
-            ? flashcards
-            : flashcards.filter(card => card.category === filterCategory);
+        // Family
+        { category: "Family", front: "la familia", back: "the family", notes: "", emoji: "👨‍👩‍👧‍👦" },
+        { category: "Family", front: "los suegros", back: "in-laws (parents)", notes: "", emoji: "👴👵" },
+        { category: "Family", front: "el cuñado / la cuñada", back: "brother-in-law / sister-in-law", notes: "", emoji: "👫" },
+        { category: "Family", front: "los sobrinos", back: "nieces and nephews", notes: "", emoji: "👶" },
 
-        // Load user progress on mount
-        useEffect(() => {
-            const loadProgress = async () => {
-                try {
-                    const savedUsername = await storage.get('current-user');
-                    if (savedUsername && savedUsername.value) {
-                        const user = savedUsername.value;
-                        setUsername(user);
-                        setIsLoggedIn(true);
-                        await loadUserProgress(user);
-                    }
-                } catch (error) {
-                    console.log('No previous session found');
-                }
-                setIsLoading(false);
-            };
-            loadProgress();
-        }, []);
+        // Essential Verbs - SER
+        { category: "Verbs", front: "yo soy", back: "I am", notes: "Ser = permanent state", emoji: "🌟" },
+        { category: "Verbs", front: "tú eres", back: "you are (informal)", notes: "", emoji: "✨" },
+        { category: "Verbs", front: "él/ella es", back: "he/she is", notes: "", emoji: "💫" },
+        { category: "Verbs", front: "nosotros somos", back: "we are", notes: "", emoji: "🤗" },
+        { category: "Verbs", front: "ellos/ellas son", back: "they are", notes: "", emoji: "👥" },
 
-        // Track time spent in current category
-        useEffect(() => {
-            if (isLoggedIn && filterCategory !== "All") {
-                setCurrentCategoryStart(Date.now());
+        // Essential Verbs - ESTAR
+        { category: "Verbs", front: "yo estoy", back: "I am", notes: "Estar = temporary state/location", emoji: "📍" },
+        { category: "Verbs", front: "tú estás", back: "you are (informal)", notes: "", emoji: "🎯" },
+        { category: "Verbs", front: "él/ella está", back: "he/she is", notes: "", emoji: "🗺️" },
+        { category: "Verbs", front: "nosotros estamos", back: "we are", notes: "", emoji: "🏠" },
 
-                return () => {
-                    const timeSpent = Math.floor((Date.now() - currentCategoryStart) / 1000);
-                    if (timeSpent > 0) {
-                        setCategoryTime(prev => ({
-                            ...prev,
-                            [filterCategory]: (prev[filterCategory] || 0) + timeSpent
-                        }));
-                    }
-                };
-            }
-        }, [filterCategory, isLoggedIn]);
+        // Essential Verbs - TENER
+        { category: "Verbs", front: "yo tengo", back: "I have", notes: "Also used for age: Tengo 25 años", emoji: "🎁" },
+        { category: "Verbs", front: "tú tienes", back: "you have", notes: "", emoji: "🎈" },
+        { category: "Verbs", front: "él/ella tiene", back: "he/she has", notes: "", emoji: "💝" },
+        { category: "Verbs", front: "nosotros tenemos", back: "we have", notes: "", emoji: "🎉" },
 
-        // Save progress whenever it changes (but not while loading)
-        useEffect(() => {
-            if (isLoggedIn && username && !isLoadingProgress) {
-                saveProgress();
-            }
-        }, [currentCard, knownCards, filterCategory, categoryTime, isLoggedIn, username, isLoadingProgress]);
+        // Essential Verbs - HABLAR
+        { category: "Verbs", front: "yo hablo", back: "I speak", notes: "Regular -ar verb", emoji: "🗣️" },
+        { category: "Verbs", front: "tú hablas", back: "you speak", notes: "", emoji: "💬" },
+        { category: "Verbs", front: "él/ella habla", back: "he/she speaks", notes: "", emoji: "💭" },
 
-        const loadUserProgress = async (user: string) => {
-            setIsLoadingProgress(true);
+        // Essential Verbs - IR
+        { category: "Verbs", front: "yo voy", back: "I go", notes: "Irregular verb", emoji: "🚶" },
+        { category: "Verbs", front: "tú vas", back: "you go", notes: "", emoji: "🏃" },
+        { category: "Verbs", front: "nosotros vamos", back: "we go", notes: "", emoji: "👣" },
+
+        // Food & Meals
+        { category: "Food", front: "la comida", back: "the food / meal", notes: "", emoji: "🍽️" },
+        { category: "Food", front: "¿Qué comemos?", back: "What are we eating?", notes: "", emoji: "🤔" },
+        { category: "Food", front: "Está delicioso", back: "It's delicious", notes: "", emoji: "😋" },
+        { category: "Food", front: "¿Me pasas...?", back: "Can you pass me...?", notes: "Polite request at table", emoji: "🙋" },
+        { category: "Food", front: "el agua", back: "water", notes: "Feminine but uses 'el'", emoji: "💧" },
+        { category: "Food", front: "la sal y la pimienta", back: "salt and pepper", notes: "", emoji: "🧂" },
+
+        // Useful Phrases
+        { category: "Phrases", front: "No entiendo", back: "I don't understand", notes: "Super important!", emoji: "🤷" },
+        { category: "Phrases", front: "¿Puedes repetir?", back: "Can you repeat?", notes: "", emoji: "🔄" },
+        { category: "Phrases", front: "Más despacio, por favor", back: "Slower, please", notes: "", emoji: "🐢" },
+        { category: "Phrases", front: "¿Cómo se dice...?", back: "How do you say...?", notes: "", emoji: "❓" },
+        { category: "Phrases", front: "Estoy aprendiendo español", back: "I'm learning Spanish", notes: "They'll appreciate this!", emoji: "📚" },
+
+        // Sentence Builders
+        { category: "Sentences", front: "Me gusta...", back: "I like...", notes: "Add noun: Me gusta la música", emoji: "❤️" },
+        { category: "Sentences", front: "Me gustaría...", back: "I would like...", notes: "More polite/conditional", emoji: "💕" },
+        { category: "Sentences", front: "Necesito...", back: "I need...", notes: "", emoji: "🎯" },
+        { category: "Sentences", front: "Quiero...", back: "I want...", notes: "", emoji: "🌟" },
+        { category: "Sentences", front: "Puedo...", back: "I can...", notes: "¿Puedo ayudar? = Can I help?", emoji: "💪" },
+
+        // Common Expressions
+        { category: "Expressions", front: "Claro que sí", back: "Of course", notes: "", emoji: "👍" },
+        { category: "Expressions", front: "Con permiso", back: "Excuse me (passing by)", notes: "", emoji: "🚪" },
+        { category: "Expressions", front: "Provecho", back: "Enjoy your meal", notes: "Said when others are eating", emoji: "🌮" },
+        { category: "Expressions", front: "Salud", back: "Cheers! / Bless you!", notes: "", emoji: "🥂" },
+        { category: "Expressions", front: "¿De verdad?", back: "Really?", notes: "", emoji: "😲" },
+    ];
+
+    const canadianFlashcards: Flashcard[] = [
+        // Winter & Snow
+        { category: "Winter", front: "Deep snow", back: "Well that's just a little dusting, eh?", notes: "What Americans call a blizzard", emoji: "❄️" },
+        { category: "Winter", front: "Cold day", back: "Bit nippy out there, bud", notes: "When it's -40°C", emoji: "🥶" },
+        { category: "Winter", front: "Snowstorm", back: "Perfect day for Timmies run", notes: "Nothing stops a Canadian", emoji: "⛄" },
+        { category: "Winter", front: "Winter tires", back: "Mandatory survival equipment", notes: "Not optional, ever", emoji: "🚗" },
+        { category: "Winter", front: "Shoveling snow", back: "Daily cardio routine", notes: "November through April", emoji: "⛷️" },
+
+        // Tim Hortons
+        { category: "Tim Hortons", front: "Double-double", back: "The nectar of life", notes: "Two cream, two sugar", emoji: "☕" },
+        { category: "Tim Hortons", front: "Timbits", back: "Breakfast of champions", notes: "Donut holes, but Canadian", emoji: "🍩" },
+        { category: "Tim Hortons", front: "Roll Up the Rim", back: "National holiday season", notes: "More exciting than lottery", emoji: "🎲" },
+        { category: "Tim Hortons", front: "Iced Capp", back: "Summer survival drink", notes: "When it hits 15°C", emoji: "🥤" },
+
+        // Polite Phrases
+        { category: "Politeness", front: "Sorry", back: "Universal greeting, eh?", notes: "Said 47 times daily minimum", emoji: "🙏" },
+        { category: "Politeness", front: "Sorry about that", back: "When someone bumps into YOU", notes: "Classic Canadian move", emoji: "😅" },
+        { category: "Politeness", front: "Excuse me, sorry", back: "Double apology combo", notes: "Extra polite mode", emoji: "🤝" },
+        { category: "Politeness", front: "Thanks, eh?", back: "Gratitude with confirmation", notes: "Seeking agreement always", emoji: "👍" },
+        { category: "Politeness", front: "Sorry, not sorry", back: "Does not compute", notes: "Not in Canadian vocabulary", emoji: "❌" },
+
+        // Hockey
+        { category: "Hockey", front: "Game night", back: "National religious observance", notes: "Everything else cancelled", emoji: "🏒" },
+        { category: "Hockey", front: "Hockey stick", back: "Canadian lightsaber", notes: "More sacred than Tim's", emoji: "🥅" },
+        { category: "Hockey", front: "Hat trick", back: "Three goals, free hats!", notes: "Literally throw your hat", emoji: "🎩" },
+        { category: "Hockey", front: "Checking", back: "Full-contact hugging", notes: "How we show affection", emoji: "💥" },
+        { category: "Hockey", front: "Zamboni", back: "Ice chariot of the gods", notes: "Coolest job ever", emoji: "🧊" },
+
+        // Slang
+        { category: "Slang", front: "Eh?", back: "Right? Don't you agree? Huh?", notes: "Sentence enhancer", emoji: "🗣️" },
+        { category: "Slang", front: "Toque", back: "Winter head survival gear", notes: "Americans call it 'beanie'", emoji: "🧢" },
+        { category: "Slang", front: "Two-four", back: "24-pack of beer", notes: "Also a holiday: May 24", emoji: "🍺" },
+        { category: "Slang", front: "Loonie", back: "$1 coin with loon on it", notes: "We named money after a bird", emoji: "💰" },
+        { category: "Slang", front: "Toonie", back: "$2 coin (two loonies)", notes: "Creative naming continues", emoji: "🪙" },
+        { category: "Slang", front: "Canuck", back: "Canadian person", notes: "Wear it with pride", emoji: "🇨🇦" },
+        { category: "Slang", front: "Mountie", back: "RCMP officer", notes: "Always gets their Tim's", emoji: "👮" },
+
+        // Food
+        { category: "Food", front: "Poutine", back: "Fries, gravy, cheese curds = heaven", notes: "Quebec's gift to humanity", emoji: "🍟" },
+        { category: "Food", front: "Kraft Dinner", back: "KD, not 'mac and cheese'", notes: "National comfort food", emoji: "🧀" },
+        { category: "Food", front: "Ketchup chips", back: "Superior chip flavor", notes: "Americans are missing out", emoji: "🥔" },
+        { category: "Food", front: "Butter tarts", back: "Sugary perfection", notes: "Raisins optional (controversial)", emoji: "🥧" },
+        { category: "Food", front: "Nanaimo bars", back: "No-bake chocolate glory", notes: "Named after BC city", emoji: "🍫" },
+
+        // Nature
+        { category: "Nature", front: "Moose", back: "Majestic road hazard", notes: "Bigger than your car", emoji: "🫎" },
+        { category: "Nature", front: "Beaver", back: "National icon and engineer", notes: "Dam impressive animal", emoji: "🦫" },
+        { category: "Nature", front: "Geese", back: "Cobra chickens", notes: "Aggressive Canadian diplomats", emoji: "🦆" },
+        { category: "Nature", front: "Maple syrup", back: "Liquid gold", notes: "Better than oil, honestly", emoji: "🍁" },
+        { category: "Nature", front: "Northern Lights", back: "Sky's free light show", notes: "Nature's screensaver", emoji: "🌌" },
+    ];
+
+    const [language, setLanguage] = useState<Language>('spanish');
+    const [username, setUsername] = useState('');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [inputUsername, setInputUsername] = useState('');
+    const [currentCard, setCurrentCard] = useState(0);
+    const [isFlipped, setIsFlipped] = useState(false);
+    const [knownCards, setKnownCards] = useState(new Set<number>());
+    const [filterCategory, setFilterCategory] = useState("All");
+    const [isLoading, setIsLoading] = useState(true);
+    const [showDashboard, setShowDashboard] = useState(false);
+    const [categoryTime, setCategoryTime] = useState<Record<string, number>>({});
+    const [sessionStart, setSessionStart] = useState(Date.now());
+    const [currentCategoryStart, setCurrentCategoryStart] = useState(Date.now());
+    const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+
+    const flashcards = language === 'spanish' ? spanishFlashcards : canadianFlashcards;
+    const categories = ["All", ...new Set(flashcards.map(card => card.category))];
+
+    const filteredCards = filterCategory === "All"
+        ? flashcards
+        : flashcards.filter(card => card.category === filterCategory);
+
+    // Load user progress on mount
+    useEffect(() => {
+        const loadProgress = async () => {
             try {
-                const progressData = await storage.get(`progress-${user}`);
-                console.log('Loading progress for', user, ':', progressData);
-                if (progressData && progressData.value) {
-                    const progress = JSON.parse(progressData.value);
-                    setCurrentCard(progress.currentCard || 0);
-                    setKnownCards(new Set(progress.knownCards || []));
-                    setFilterCategory(progress.filterCategory || "All");
-                    setCategoryTime(progress.categoryTime || {});
-                    console.log('Progress loaded successfully:', progress);
-                } else {
-                    console.log('No saved progress found for user:', user);
+                const savedUsername = await storage.get('current-user');
+                const savedLanguage = await storage.get('current-language');
+                if (savedUsername && savedUsername.value) {
+                    const user = savedUsername.value;
+                    const lang = (savedLanguage?.value as Language) || 'spanish';
+                    setUsername(user);
+                    setLanguage(lang);
+                    setIsLoggedIn(true);
+                    await loadUserProgress(user, lang);
                 }
             } catch (error) {
-                console.log('Starting fresh progress for user:', error);
-            } finally {
+                console.log('No previous session found');
+            }
+            setIsLoading(false);
+        };
+        loadProgress();
+    }, []);
+
+    // Track time spent in current category
+    useEffect(() => {
+        if (isLoggedIn && filterCategory !== "All") {
+            setCurrentCategoryStart(Date.now());
+
+            return () => {
+                const timeSpent = Math.floor((Date.now() - currentCategoryStart) / 1000);
+                if (timeSpent > 0) {
+                    setCategoryTime(prev => ({
+                        ...prev,
+                        [filterCategory]: (prev[filterCategory] || 0) + timeSpent
+                    }));
+                }
+            };
+        }
+    }, [filterCategory, isLoggedIn]);
+
+    // Save progress whenever it changes (but not while loading)
+    useEffect(() => {
+        if (isLoggedIn && username && !isLoadingProgress) {
+            saveProgress();
+        }
+    }, [currentCard, knownCards, filterCategory, categoryTime, isLoggedIn, username, isLoadingProgress]);
+
+    const loadUserProgress = async (user: string, lang: Language) => {
+        setIsLoadingProgress(true);
+        try {
+            const progressData = await storage.get(`progress-${user}-${lang}`);
+            console.log('Loading progress for', user, lang, ':', progressData);
+            if (progressData && progressData.value) {
+                const progress = JSON.parse(progressData.value);
+                setCurrentCard(progress.currentCard || 0);
+                setKnownCards(new Set(progress.knownCards || []));
+                setFilterCategory(progress.filterCategory || "All");
+                setCategoryTime(progress.categoryTime || {});
+                console.log('Progress loaded successfully:', progress);
+            } else {
+                console.log('No saved progress found for user:', user, lang);
+            }
+        } catch (error) {
+            console.log('Starting fresh progress for user:', error);
+        } finally {
+            setIsLoadingProgress(false);
+        }
+    };
+
+    const saveProgress = async () => {
+        try {
+            const progress = {
+                currentCard,
+                knownCards: Array.from(knownCards),
+                filterCategory,
+                categoryTime,
+                lastAccessed: new Date().toISOString()
+            };
+            await storage.set(`progress-${username}-${language}`, JSON.stringify(progress));
+            console.log('Progress saved for', username, language, ':', progress);
+        } catch (error) {
+            console.error('Failed to save progress:', error);
+        }
+    };
+
+    const handleLogin = async (selectedLang: Language) => {
+        if (inputUsername.trim()) {
+            const user = inputUsername.trim();
+            setUsername(user);
+            setLanguage(selectedLang);
+            setIsLoggedIn(true);
+            setIsLoadingProgress(true);
+
+            try {
+                await storage.set('current-user', user);
+                await storage.set('current-language', selectedLang);
+                await loadUserProgress(user, selectedLang);
+            } catch (error) {
+                console.error('Login error:', error);
                 setIsLoadingProgress(false);
             }
-        };
+        }
+    };
 
-        const saveProgress = async () => {
+    const handleLogout = async () => {
+        // Save progress one final time before logging out
+        await saveProgress();
+
+        try {
+            await storage.delete('current-user');
+            await storage.delete('current-language');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+
+        // Now clear the UI state
+        setIsLoggedIn(false);
+        setUsername('');
+        setInputUsername('');
+        setCurrentCard(0);
+        setKnownCards(new Set());
+        setFilterCategory("All");
+        setIsFlipped(false);
+        setCategoryTime({});
+    };
+
+    const handleLanguageSwitch = async (newLang: Language) => {
+        if (newLang === language) return;
+
+        // Save current progress
+        await saveProgress();
+
+        // Switch language
+        setLanguage(newLang);
+        setCurrentCard(0);
+        setIsFlipped(false);
+        setFilterCategory("All");
+
+        // Load progress for new language
+        await storage.set('current-language', newLang);
+        await loadUserProgress(username, newLang);
+    };
+
+    const handleNext = () => {
+        setIsFlipped(false);
+        setCurrentCard((prev) => (prev + 1) % filteredCards.length);
+    };
+
+    const handlePrevious = () => {
+        setIsFlipped(false);
+        setCurrentCard((prev) => (prev - 1 + filteredCards.length) % filteredCards.length);
+    };
+
+    const handleFlip = () => {
+        setIsFlipped(!isFlipped);
+    };
+
+    const toggleKnown = () => {
+        // Get the actual index in the full flashcards array
+        const actualCard = filteredCards[currentCard];
+        const actualIndex = flashcards.findIndex(card => card === actualCard);
+
+        const newKnown = new Set(knownCards);
+        if (newKnown.has(actualIndex)) {
+            newKnown.delete(actualIndex);
+        } else {
+            newKnown.add(actualIndex);
+        }
+        setKnownCards(newKnown);
+    };
+
+    const resetProgress = async () => {
+        setKnownCards(new Set());
+        setCurrentCard(0);
+        setIsFlipped(false);
+        setFilterCategory("All");
+        setCategoryTime({});
+        if (username) {
             try {
-                const progress = {
-                    currentCard,
-                    knownCards: Array.from(knownCards),
-                    filterCategory,
-                    categoryTime,
-                    lastAccessed: new Date().toISOString()
-                };
-                await storage.set(`progress-${username}`, JSON.stringify(progress));
-                console.log('Progress saved for', username, ':', progress);
+                await storage.delete(`progress-${username}-${language}`);
             } catch (error) {
-                console.error('Failed to save progress:', error);
+                console.error('Failed to reset progress:', error);
             }
-        };
+        }
+    };
 
-        const handleLogin = async () => {
-            if (inputUsername.trim()) {
-                const user = inputUsername.trim();
-                setUsername(user);
-                setIsLoggedIn(true);
-                setIsLoadingProgress(true);
+    const formatTime = (seconds: number) => {
+        if (seconds < 60) return `${seconds}s`;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}m ${secs}s`;
+    };
 
-                try {
-                    await storage.set('current-user', user);
-                    await loadUserProgress(user);
-                } catch (error) {
-                    console.error('Login error:', error);
-                    setIsLoadingProgress(false);
-                }
-            }
-        };
+    const getCategoryStats = () => {
+        const stats: Record<string, { total: number; known: number; percentage: number; timeSpent: number }> = {};
+        const categoryList = categories.filter(c => c !== "All");
 
-        const handleLogout = async () => {
-            // Save progress one final time before logging out
-            await saveProgress();
+        categoryList.forEach(cat => {
+            const catCards = flashcards.filter(card => card.category === cat);
+            const catIndices = catCards.map(card =>
+                flashcards.findIndex(fc => fc === card)
+            );
+            const knownInCategory = catIndices.filter(idx => knownCards.has(idx)).length;
 
-            try {
-                await storage.delete('current-user');
-            } catch (error) {
-                console.error('Logout error:', error);
-            }
-
-            // Now clear the UI state
-            setIsLoggedIn(false);
-            setUsername('');
-            setInputUsername('');
-            setCurrentCard(0);
-            setKnownCards(new Set());
-            setFilterCategory("All");
-            setIsFlipped(false);
-            setCategoryTime({});
-        };
-
-        const handleNext = () => {
-            setIsFlipped(false);
-            setCurrentCard((prev) => (prev + 1) % filteredCards.length);
-        };
-
-        const handlePrevious = () => {
-            setIsFlipped(false);
-            setCurrentCard((prev) => (prev - 1 + filteredCards.length) % filteredCards.length);
-        };
-
-        const handleFlip = () => {
-            setIsFlipped(!isFlipped);
-        };
-
-        const toggleKnown = () => {
-            // Get the actual index in the full flashcards array
-            const actualCard = filteredCards[currentCard];
-            const actualIndex = flashcards.findIndex(card => card === actualCard);
-
-            const newKnown = new Set(knownCards);
-            if (newKnown.has(actualIndex)) {
-                newKnown.delete(actualIndex);
-            } else {
-                newKnown.add(actualIndex);
-            }
-            setKnownCards(newKnown);
-        };
-
-        const resetProgress = async () => {
-            setKnownCards(new Set());
-            setCurrentCard(0);
-            setIsFlipped(false);
-            setFilterCategory("All");
-            setCategoryTime({});
-            if (username) {
-                try {
-                    await storage.delete(`progress-${username}`);
-                } catch (error) {
-                    console.error('Failed to reset progress:', error);
-                }
-            }
-        };
-
-        const formatTime = (seconds) => {
-            if (seconds < 60) return `${seconds}s`;
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins}m ${secs}s`;
-        };
-
-        const getCategoryStats = () => {
-            const stats: Record<string, { total: number; known: number; percentage: number; timeSpent: number }> = {};
-            const categoryList = categories.filter(c => c !== "All");
-
-            categoryList.forEach(cat => {
-                const catCards = flashcards.filter(card => card.category === cat);
-                const catIndices = catCards.map(card =>
-                    flashcards.findIndex(fc => fc === card)
-                );
-                const knownInCategory = catIndices.filter(idx => knownCards.has(idx)).length;
-
-                stats[cat] = {
-                    total: catCards.length,
-                    known: knownInCategory,
-                    percentage: Math.round((knownInCategory / catCards.length) * 100),
-                    timeSpent: categoryTime[cat] || 0
-                };
-            });
-
-            return stats;
-        };
-
-        const getOverallProgress = () => {
-            const total = flashcards.length;
-            const known = knownCards.size;
-            return {
-                total,
-                known,
-                percentage: Math.round((known / total) * 100)
+            stats[cat] = {
+                total: catCards.length,
+                known: knownInCategory,
+                percentage: Math.round((knownInCategory / catCards.length) * 100),
+                timeSpent: categoryTime[cat] || 0
             };
+        });
+
+        return stats;
+    };
+
+    const getOverallProgress = () => {
+        const total = flashcards.length;
+        const known = knownCards.size;
+        return {
+            total,
+            known,
+            percentage: Math.round((known / total) * 100)
         };
+    };
 
-        if (isLoading) {
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-red-500 via-white to-green-600 flex items-center justify-center">
-                    <div className="text-4xl">🌮 Cargando...</div>
-                </div>
-            );
+    const getThemeColors = () => {
+        if (language === 'spanish') {
+            return {
+                gradient: 'from-red-500 via-white to-green-600',
+                primary: 'from-pink-500 to-red-500',
+                secondary: 'from-green-400 to-green-600',
+                accent: 'border-yellow-400',
+                cardFront: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                cardBack: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            };
+        } else {
+            return {
+                gradient: 'from-red-600 via-white to-red-600',
+                primary: 'from-red-600 to-red-800',
+                secondary: 'from-blue-400 to-blue-600',
+                accent: 'border-red-600',
+                cardFront: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+                cardBack: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+            };
         }
+    };
 
-        // Login Screen
-        if (!isLoggedIn) {
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-red-500 via-white to-green-600 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full border-4 border-yellow-400">
-                        <div className="text-center mb-8">
-                            <div className="text-6xl mb-4">🇲🇽</div>
-                            <h1 className="text-3xl font-bold text-gray-800 mb-2">¡Bienvenidos!</h1>
-                            <p className="text-gray-600">Welcome to Spanish Flashcards</p>
+    const theme = getThemeColors();
+
+    if (isLoading) {
+        return (
+            <div className={`min-h-screen bg-gradient-to-br ${theme.gradient} flex items-center justify-center`}>
+                <div className="text-4xl">{language === 'spanish' ? '🌮' : '🍁'} Loading...</div>
+            </div>
+        );
+    }
+
+    // Login Screen
+    if (!isLoggedIn) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 flex items-center justify-center p-4">
+                <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full border-4 border-indigo-400">
+                    <div className="text-center mb-8">
+                        <div className="text-6xl mb-4">🌍</div>
+                        <h1 className="text-3xl font-bold text-gray-800 mb-2">Language Flashcards</h1>
+                        <p className="text-gray-600">Choose your learning adventure!</p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">
+                                Enter your name:
+                            </label>
+                            <input
+                                type="text"
+                                value={inputUsername}
+                                onChange={(e) => setInputUsername(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && inputUsername.trim()) {
+                                        // Default to Spanish on Enter
+                                        handleLogin('spanish');
+                                    }
+                                }}
+                                placeholder="Your name..."
+                                className="w-full px-4 py-3 border-2 border-purple-300 rounded-xl focus:outline-none focus:border-purple-500 text-lg"
+                            />
                         </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">
-                                    Enter your name to start learning:
-                                </label>
-                                <input
-                                    type="text"
-                                    value={inputUsername}
-                                    onChange={(e) => setInputUsername(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                                    placeholder="Your name..."
-                                    className="w-full px-4 py-3 border-2 border-pink-300 rounded-xl focus:outline-none focus:border-pink-500 text-lg"
-                                />
-                            </div>
+                        <div className="space-y-3">
+                            <p className="text-sm font-bold text-gray-700 text-center">Choose a language:</p>
 
                             <button
-                                onClick={handleLogin}
+                                onClick={() => handleLogin('spanish')}
                                 disabled={!inputUsername.trim()}
-                                className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                             >
-                                ¡Empezar! (Start)
+                                <span className="text-2xl">🇲🇽</span>
+                                <span>Spanish - ¡Empezar!</span>
                             </button>
-                        </div>
 
-                        <div className="mt-6 text-center text-sm text-gray-600">
-                            <p className="flex items-center justify-center gap-2">
-                                <span className="text-lg">💾</span>
-                                Your progress will be saved automatically
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // Dashboard View
-        if (showDashboard) {
-            const categoryStats = getCategoryStats();
-            const overallProgress = getOverallProgress();
-            const completedCategories = Object.values(categoryStats).filter(stat => stat.percentage === 100).length;
-            const totalCategories = Object.keys(categoryStats).length;
-
-            // Badge definitions
-            const badges = [
-                { id: 'beginner', name: 'First Steps', emoji: '🌱', requirement: 'Mark your first card as known', earned: knownCards.size >= 1 },
-                { id: 'studious', name: 'Estudioso', emoji: '📚', requirement: 'Mark 10 cards as known', earned: knownCards.size >= 10 },
-                { id: 'dedicated', name: 'Dedicado', emoji: '⭐', requirement: 'Mark 25 cards as known', earned: knownCards.size >= 25 },
-                { id: 'category-master', name: 'Category Master', emoji: '🏆', requirement: 'Complete any category 100%', earned: completedCategories >= 1 },
-                { id: 'polyglot', name: 'Políglota', emoji: '🌟', requirement: 'Complete 3 categories', earned: completedCategories >= 3 },
-                { id: 'time-warrior', name: 'Time Warrior', emoji: '⏰', requirement: 'Study for 10+ minutes total', earned: Object.values(categoryTime).reduce((a, b) => a + b, 0) >= 600 },
-                { id: 'perfectionist', name: 'Perfeccionista', emoji: '💎', requirement: 'Complete ALL categories 100%', earned: completedCategories === totalCategories && totalCategories > 0 },
-                { id: 'speed-learner', name: 'Speed Learner', emoji: '⚡', requirement: 'Complete 50% in under 30 mins', earned: overallProgress.percentage >= 50 && Object.values(categoryTime).reduce((a, b) => a + b, 0) < 1800 },
-            ];
-
-            const earnedBadges = badges.filter(b => b.earned);
-            const lockedBadges = badges.filter(b => !b.earned);
-
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-red-500 via-white to-green-600 p-4 md:p-8">
-                    <div className="fixed inset-0 opacity-10 pointer-events-none" style={{
-                        backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(0,0,0,.1) 35px, rgba(0,0,0,.1) 70px)`
-                    }}></div>
-
-                    <div className="max-w-4xl mx-auto relative">
-                        {/* Header */}
-                        <div className="flex justify-between items-center mb-6">
-                            <div className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-yellow-400 flex items-center gap-2">
-                                <User className="w-4 h-4 text-pink-500" />
-                                <span className="font-bold text-gray-800">{username}</span>
-                            </div>
                             <button
-                                onClick={() => setShowDashboard(false)}
-                                className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-green-400 flex items-center gap-2 hover:bg-green-50 transition font-bold text-gray-800"
+                                onClick={() => handleLogin('canadian')}
+                                disabled={!inputUsername.trim()}
+                                className="w-full bg-gradient-to-r from-red-600 via-white to-red-600 text-gray-800 font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 border-2 border-red-600"
                             >
-                                ← Back to Cards
+                                <span className="text-2xl">🇨🇦</span>
+                                <span>Canadian - Let's go, eh?</span>
                             </button>
                         </div>
+                    </div>
 
-                        <div className="text-center mb-8">
-                            <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg flex items-center justify-center gap-3">
-                                <BarChart3 className="w-10 h-10" />
-                                Tu Progreso
-                            </h1>
-                            <p className="text-white font-semibold drop-shadow">Your Learning Dashboard</p>
-                        </div>
-
-                        {/* Overall Progress Card */}
-                        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6 border-4 border-yellow-400">
-                            <div className="flex items-center gap-3 mb-4">
-                                <Trophy className="w-8 h-8 text-yellow-500" />
-                                <h2 className="text-2xl font-bold text-gray-800">Overall Progress</h2>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-5xl font-bold text-pink-600">{overallProgress.percentage}%</p>
-                                    <p className="text-gray-600 font-medium mt-2">
-                                        {overallProgress.known} of {overallProgress.total} cards mastered
-                                    </p>
-                                    <p className="text-sm text-green-600 font-bold mt-1">
-                                        🏆 {completedCategories} of {totalCategories} categories completed
-                                    </p>
-                                </div>
-                                <div className="text-6xl">
-                                    {overallProgress.percentage === 100 ? '🎉' : overallProgress.percentage >= 75 ? '🌟' : overallProgress.percentage >= 50 ? '🚀' : '💪'}
-                                </div>
-                            </div>
-                            <div className="mt-4 bg-gray-200 rounded-full h-4 overflow-hidden">
-                                <div
-                                    className="bg-gradient-to-r from-pink-500 to-red-500 h-full transition-all duration-500"
-                                    style={{ width: `${overallProgress.percentage}%` }}
-                                ></div>
-                            </div>
-                        </div>
-
-                        {/* Badges Section */}
-                        <div className="bg-white rounded-2xl shadow-2xl p-6 mb-6 border-4 border-purple-400">
-                            <div className="flex items-center gap-3 mb-4">
-                                <span className="text-3xl">🎖️</span>
-                                <h2 className="text-2xl font-bold text-gray-800">Your Badges</h2>
-                                <span className="ml-auto bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold">
-                {earnedBadges.length} / {badges.length}
-              </span>
-                            </div>
-
-                            {/* Earned Badges */}
-                            {earnedBadges.length > 0 && (
-                                <div className="mb-6">
-                                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Earned 🎉</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {earnedBadges.map(badge => (
-                                            <div
-                                                key={badge.id}
-                                                className="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl p-4 text-center border-2 border-yellow-400 shadow-md hover:scale-105 transition-transform"
-                                            >
-                                                <div className="text-4xl mb-2 animate-bounce">{badge.emoji}</div>
-                                                <p className="font-bold text-gray-800 text-sm">{badge.name}</p>
-                                                <p className="text-xs text-gray-600 mt-1">{badge.requirement}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Locked Badges */}
-                            {lockedBadges.length > 0 && (
-                                <div>
-                                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Locked 🔒</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {lockedBadges.map(badge => (
-                                            <div
-                                                key={badge.id}
-                                                className="bg-gray-100 rounded-xl p-4 text-center border-2 border-gray-300 opacity-60"
-                                            >
-                                                <div className="text-4xl mb-2 grayscale">{badge.emoji}</div>
-                                                <p className="font-bold text-gray-600 text-sm">{badge.name}</p>
-                                                <p className="text-xs text-gray-500 mt-1">{badge.requirement}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {earnedBadges.length === badges.length && (
-                                <div className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl p-4 text-center">
-                                    <p className="text-2xl font-bold">🎊 ¡Felicidades! You've earned all badges! 🎊</p>
-                                    <p className="text-sm mt-1">You're a Spanish learning champion!</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Category Stats Grid */}
-                        <div className="grid md:grid-cols-2 gap-4 mb-6">
-                            {Object.entries(categoryStats).map(([category, stats]) => (
-                                <div key={category} className={`bg-white rounded-xl shadow-lg p-6 border-2 ${stats.percentage === 100 ? 'border-yellow-400 bg-gradient-to-br from-yellow-50 to-white' : 'border-green-300'}`}>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-xl font-bold text-gray-800">{category}</h3>
-                                        {stats.percentage === 100 && (
-                                            <div className="flex items-center gap-1 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
-                                                <Trophy className="w-3 h-3" />
-                                                MASTERED!
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {/* Progress Bar */}
-                                        <div>
-                                            <div className="flex justify-between text-sm font-semibold mb-1">
-                                                <span className="text-gray-600">Completion</span>
-                                                <span className="text-pink-600">{stats.percentage}%</span>
-                                            </div>
-                                            <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                <div
-                                                    className={`h-full transition-all ${stats.percentage === 100 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : 'bg-gradient-to-r from-green-400 to-green-600'}`}
-                                                    style={{ width: `${stats.percentage}%` }}
-                                                ></div>
-                                            </div>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {stats.known} / {stats.total} cards
-                                            </p>
-                                        </div>
-
-                                        {/* Time Spent */}
-                                        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                                            <div className="flex items-center gap-2 text-gray-600">
-                                                <Clock className="w-4 h-4" />
-                                                <span className="text-sm font-medium">Time Spent</span>
-                                            </div>
-                                            <span className="text-sm font-bold text-blue-600">
-                      {formatTime(stats.timeSpent)}
-                    </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Study Tips */}
-                        <div className="bg-white rounded-2xl shadow-xl p-6 border-4 border-yellow-400">
-                            <h3 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
-                                <span className="text-2xl">💡</span> Keep Going!
-                            </h3>
-                            <ul className="text-sm text-gray-700 space-y-2 font-medium">
-                                <li>🎯 Focus on categories with lower completion rates</li>
-                                <li>🔄 Review cards you've marked as known regularly</li>
-                                <li>⏰ Spend at least 5 minutes per category for best retention</li>
-                                <li>🗣️ Practice speaking the phrases out loud!</li>
-                                <li>🏆 Earn all badges to become a master Spanish learner!</li>
-                            </ul>
-                        </div>
+                    <div className="mt-6 text-center text-sm text-gray-600">
+                        <p className="flex items-center justify-center gap-2">
+                            <span className="text-lg">💾</span>
+                            Progress saved per language
+                        </p>
                     </div>
                 </div>
-            );
-        }
+            </div>
+        );
+    }
 
-        const card = filteredCards[currentCard];
+    // Dashboard View
+    if (showDashboard) {
+        const categoryStats = getCategoryStats();
+        const overallProgress = getOverallProgress();
+        const completedCategories = Object.values(categoryStats).filter(stat => stat.percentage === 100).length;
+        const totalCategories = Object.keys(categoryStats).length;
+
+        const badges = [
+            { id: 'beginner', name: 'First Steps', emoji: '🌱', requirement: 'Mark your first card as known', earned: knownCards.size >= 1 },
+            { id: 'studious', name: language === 'spanish' ? 'Estudioso' : 'Keener', emoji: '📚', requirement: 'Mark 10 cards as known', earned: knownCards.size >= 10 },
+            { id: 'dedicated', name: language === 'spanish' ? 'Dedicado' : 'Beauty', emoji: '⭐', requirement: 'Mark 25 cards as known', earned: knownCards.size >= 25 },
+            { id: 'category-master', name: 'Category Master', emoji: '🏆', requirement: 'Complete any category 100%', earned: completedCategories >= 1 },
+            { id: 'polyglot', name: language === 'spanish' ? 'Políglota' : 'True North', emoji: '🌟', requirement: 'Complete 3 categories', earned: completedCategories >= 3 },
+            { id: 'time-warrior', name: 'Time Warrior', emoji: '⏰', requirement: 'Study for 10+ minutes total', earned: Object.values(categoryTime).reduce((a, b) => a + b, 0) >= 600 },
+            { id: 'perfectionist', name: language === 'spanish' ? 'Perfeccionista' : 'Hoser Hero', emoji: '💎', requirement: 'Complete ALL categories 100%', earned: completedCategories === totalCategories && totalCategories > 0 },
+            { id: 'speed-learner', name: 'Speed Learner', emoji: '⚡', requirement: 'Complete 50% in under 30 mins', earned: overallProgress.percentage >= 50 && Object.values(categoryTime).reduce((a, b) => a + b, 0) < 1800 },
+        ];
+
+        const earnedBadges = badges.filter(b => b.earned);
+        const lockedBadges = badges.filter(b => !b.earned);
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-red-500 via-white to-green-600 p-4 md:p-8">
-                {/* Decorative papel picado pattern */}
+            <div className={`min-h-screen bg-gradient-to-br ${theme.gradient} p-4 md:p-8`}>
                 <div className="fixed inset-0 opacity-10 pointer-events-none" style={{
                     backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(0,0,0,.1) 35px, rgba(0,0,0,.1) 70px)`
                 }}></div>
 
-                <div className="max-w-2xl mx-auto relative">
-                    {/* Header with user info */}
-                    <div className="flex justify-between items-center mb-4">
-                        <div className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-yellow-400 flex items-center gap-2">
+                <div className="max-w-4xl mx-auto relative">
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
+                        <div className="bg-white rounded-full px-4 py-2 shadow-lg border-2 ${theme.accent} flex items-center gap-2">
                             <User className="w-4 h-4 text-pink-500" />
                             <span className="font-bold text-gray-800">{username}</span>
+                            <span className="text-2xl ml-2">{language === 'spanish' ? '🇲🇽' : '🇨🇦'}</span>
                         </div>
                         <div className="flex gap-2">
                             <button
-                                onClick={() => setShowDashboard(true)}
-                                className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-blue-400 flex items-center gap-2 hover:bg-blue-50 transition font-bold text-gray-800"
+                                onClick={() => handleLanguageSwitch(language === 'spanish' ? 'canadian' : 'spanish')}
+                                className={`bg-white rounded-full px-4 py-2 shadow-lg border-2 border-purple-400 flex items-center gap-2 hover:bg-purple-50 transition font-bold text-gray-800`}
                             >
-                                <BarChart3 className="w-4 h-4" />
-                                Stats
+                                <Globe className="w-4 h-4" />
+                                {language === 'spanish' ? '🇨🇦' : '🇲🇽'}
                             </button>
                             <button
-                                onClick={handleLogout}
-                                className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-red-400 flex items-center gap-2 hover:bg-red-50 transition font-bold text-gray-800"
+                                onClick={() => setShowDashboard(false)}
+                                className={`bg-white rounded-full px-4 py-2 shadow-lg border-2 border-green-400 flex items-center gap-2 hover:bg-green-50 transition font-bold text-gray-800`}
                             >
-                                <LogOut className="w-4 h-4" />
-                                Salir
+                                ← Back
                             </button>
                         </div>
                     </div>
 
                     <div className="text-center mb-8">
-                        <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg" style={{
-                            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-                        }}>
-                            🇲🇽 Tarjetas de Español 🇲🇽
+                        <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg flex items-center justify-center gap-3">
+                            <BarChart3 className="w-10 h-10" />
+                            {language === 'spanish' ? 'Tu Progreso' : 'Your Progress, Eh?'}
                         </h1>
-                        <p className="text-white font-semibold drop-shadow">Para conectar con la familia</p>
+                        <p className="text-white font-semibold drop-shadow">
+                            {language === 'spanish' ? 'Your Learning Dashboard' : 'How ya doin, bud?'}
+                        </p>
                     </div>
 
-                    {/* Category Filter */}
-                    <div className="flex flex-wrap gap-2 justify-center mb-6">
-                        {categories.map(cat => (
-                            <button
-                                key={cat}
-                                onClick={() => {
-                                    setFilterCategory(cat);
-                                    setCurrentCard(0);
-                                    setIsFlipped(false);
-                                }}
-                                className={`px-4 py-2 rounded-full text-sm font-bold transition shadow-lg ${
-                                    filterCategory === cat
-                                        ? 'bg-gradient-to-r from-pink-500 to-red-500 text-white scale-105'
-                                        : 'bg-white text-gray-800 hover:bg-yellow-100 border-2 border-green-600'
-                                }`}
-                            >
-                                {cat}
-                            </button>
-                        ))}
+                    {/* Overall Progress Card */}
+                    <div className={`bg-white rounded-2xl shadow-2xl p-8 mb-6 border-4 ${theme.accent}`}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <Trophy className="w-8 h-8 text-yellow-500" />
+                            <h2 className="text-2xl font-bold text-gray-800">Overall Progress</h2>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-5xl font-bold text-pink-600">{overallProgress.percentage}%</p>
+                                <p className="text-gray-600 font-medium mt-2">
+                                    {overallProgress.known} of {overallProgress.total} cards mastered
+                                </p>
+                                <p className="text-sm text-green-600 font-bold mt-1">
+                                    🏆 {completedCategories} of {totalCategories} categories completed
+                                </p>
+                            </div>
+                            <div className="text-6xl">
+                                {overallProgress.percentage === 100 ? '🎉' : overallProgress.percentage >= 75 ? '🌟' : overallProgress.percentage >= 50 ? '🚀' : '💪'}
+                            </div>
+                        </div>
+                        <div className="mt-4 bg-gray-200 rounded-full h-4 overflow-hidden">
+                            <div
+                                className={`bg-gradient-to-r ${theme.primary} h-full transition-all duration-500`}
+                                style={{ width: `${overallProgress.percentage}%` }}
+                            ></div>
+                        </div>
                     </div>
 
-                    {/* Progress */}
-                    <div className="text-center mb-4 text-sm font-semibold text-white drop-shadow">
-                        Card {currentCard + 1} of {filteredCards.length} • {knownCards.size} marked as known
-                    </div>
-
-                    {/* Flashcard */}
-                    <div
-                        onClick={handleFlip}
-                        className="relative rounded-3xl shadow-2xl p-8 md:p-12 mb-6 cursor-pointer transition-all hover:shadow-xl border-4"
-                        style={{
-                            minHeight: '350px',
-                            background: isFlipped
-                                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                                : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                            borderColor: '#fbbf24'
-                        }}
-                    >
-                        {/* Decorative corners */}
-                        <div className="absolute top-2 left-2 text-4xl">🌺</div>
-                        <div className="absolute top-2 right-2 text-4xl">🌺</div>
-                        <div className="absolute bottom-2 left-2 text-4xl">🌸</div>
-                        <div className="absolute bottom-2 right-2 text-4xl">🌸</div>
-
-                        <div className="absolute top-4 right-16">
-            <span className="px-3 py-1 bg-yellow-400 text-gray-900 rounded-full text-xs font-bold border-2 border-white shadow">
-              {card.category}
-            </span>
+                    {/* Badges Section */}
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 mb-6 border-4 border-purple-400">
+                        <div className="flex items-center gap-3 mb-4">
+                            <span className="text-3xl">🎖️</span>
+                            <h2 className="text-2xl font-bold text-gray-800">Your Badges</h2>
+                            <span className="ml-auto bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold">
+                {earnedBadges.length} / {badges.length}
+              </span>
                         </div>
 
-                        <div className="flex flex-col items-center justify-center h-full text-center">
-                            {!isFlipped ? (
-                                <div>
-                                    <div className="text-7xl mb-4">{card.emoji}</div>
-                                    <p className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                                        {card.front}
-                                    </p>
-                                    <p className="text-yellow-100 text-sm font-semibold">👆 Click to reveal</p>
+                        {earnedBadges.length > 0 && (
+                            <div className="mb-6">
+                                <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Earned 🎉</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {earnedBadges.map(badge => (
+                                        <div
+                                            key={badge.id}
+                                            className="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl p-4 text-center border-2 border-yellow-400 shadow-md hover:scale-105 transition-transform"
+                                        >
+                                            <div className="text-4xl mb-2 animate-bounce">{badge.emoji}</div>
+                                            <p className="font-bold text-gray-800 text-sm">{badge.name}</p>
+                                            <p className="text-xs text-gray-600 mt-1">{badge.requirement}</p>
+                                        </div>
+                                    ))}
                                 </div>
-                            ) : (
-                                <div>
-                                    <div className="text-7xl mb-4">{card.emoji}</div>
-                                    <p className="text-3xl md:text-4xl font-bold text-white mb-4 drop-shadow-lg">
-                                        {card.back}
-                                    </p>
-                                    {card.notes && (
-                                        <p className="text-yellow-100 text-sm font-semibold italic mt-4 max-w-md bg-black bg-opacity-20 rounded-lg p-3">
-                                            💡 {card.notes}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
-                        {knownCards.has(flashcards.findIndex(card => card === filteredCards[currentCard])) && (
-                            <div className="absolute top-4 left-16 bg-white rounded-full p-2 shadow-lg">
-                                <Check className="w-6 h-6 text-green-600" />
+                        {lockedBadges.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Locked 🔒</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {lockedBadges.map(badge => (
+                                        <div
+                                            key={badge.id}
+                                            className="bg-gray-100 rounded-xl p-4 text-center border-2 border-gray-300 opacity-60"
+                                        >
+                                            <div className="text-4xl mb-2 grayscale">{badge.emoji}</div>
+                                            <p className="font-bold text-gray-600 text-sm">{badge.name}</p>
+                                            <p className="text-xs text-gray-500 mt-1">{badge.requirement}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {earnedBadges.length === badges.length && (
+                            <div className={`mt-4 bg-gradient-to-r ${theme.primary} text-white rounded-xl p-4 text-center`}>
+                                <p className="text-2xl font-bold">
+                                    {language === 'spanish' ? '🎊 ¡Felicidades! You\'ve earned all badges! 🎊' : '🎊 Beauty! You got all the badges, eh? 🎊'}
+                                </p>
+                                <p className="text-sm mt-1">
+                                    {language === 'spanish' ? 'You\'re a Spanish learning champion!' : 'You\'re a true Canadian, bud!'}
+                                </p>
                             </div>
                         )}
                     </div>
 
-                    {/* Controls */}
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                        <button
-                            onClick={handlePrevious}
-                            className="flex items-center gap-2 px-6 py-3 bg-white rounded-xl shadow-lg hover:shadow-xl transition font-bold text-gray-800 border-2 border-pink-400"
-                        >
-                            <ChevronLeft className="w-5 h-5" />
-                            Anterior
-                        </button>
+                    {/* Category Stats Grid */}
+                    <div className="grid md:grid-cols-2 gap-4 mb-6">
+                        {Object.entries(categoryStats).map(([category, stats]) => (
+                            <div key={category} className={`bg-white rounded-xl shadow-lg p-6 border-2 ${stats.percentage === 100 ? 'border-yellow-400 bg-gradient-to-br from-yellow-50 to-white' : theme.accent.replace('border', 'border')}`}>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xl font-bold text-gray-800">{category}</h3>
+                                    {stats.percentage === 100 && (
+                                        <div className="flex items-center gap-1 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                                            <Trophy className="w-3 h-3" />
+                                            MASTERED!
+                                        </div>
+                                    )}
+                                </div>
 
-                        <button
-                            onClick={toggleKnown}
-                            className={`px-6 py-3 rounded-xl shadow-lg transition font-bold border-2 ${
-                                knownCards.has(flashcards.findIndex(card => card === filteredCards[currentCard]))
-                                    ? 'bg-green-500 text-white hover:bg-green-600 border-green-700'
-                                    : 'bg-white hover:bg-yellow-100 border-yellow-400 text-gray-800'
-                            }`}
-                        >
-                            {knownCards.has(flashcards.findIndex(card => card === filteredCards[currentCard])) ? '✓ ¡Lo sé!' : 'Marcar'}
-                        </button>
+                                <div className="space-y-3">
+                                    <div>
+                                        <div className="flex justify-between text-sm font-semibold mb-1">
+                                            <span className="text-gray-600">Completion</span>
+                                            <span className="text-pink-600">{stats.percentage}%</span>
+                                        </div>
+                                        <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                                            <div
+                                                className={`h-full transition-all ${stats.percentage === 100 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : `bg-gradient-to-r ${theme.secondary}`}`}
+                                                style={{ width: `${stats.percentage}%` }}
+                                            ></div>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            {stats.known} / {stats.total} cards
+                                        </p>
+                                    </div>
 
-                        <button
-                            onClick={handleNext}
-                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl shadow-lg hover:shadow-xl transition font-bold border-2 border-red-700"
-                        >
-                            Siguiente
-                            <ChevronRight className="w-5 h-5" />
-                        </button>
+                                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                                        <div className="flex items-center gap-2 text-gray-600">
+                                            <Clock className="w-4 h-4" />
+                                            <span className="text-sm font-medium">Time Spent</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-blue-600">
+                      {formatTime(stats.timeSpent)}
+                    </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
-                    <div className="text-center">
-                        <button
-                            onClick={resetProgress}
-                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white hover:text-yellow-200 transition drop-shadow"
-                        >
-                            <RotateCcw className="w-4 h-4" />
-                            Empezar de Nuevo
-                        </button>
-                    </div>
-
-                    {/* Tips */}
-                    <div className="mt-8 bg-white rounded-2xl shadow-xl p-6 border-4 border-yellow-400">
+                    {/* Study Tips */}
+                    <div className={`bg-white rounded-2xl shadow-xl p-6 border-4 ${theme.accent}`}>
                         <h3 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
-                            <span className="text-2xl">📖</span> Study Tips:
+                            <span className="text-2xl">💡</span> {language === 'spanish' ? 'Keep Going!' : 'Keep at \'er!'}
                         </h3>
                         <ul className="text-sm text-gray-700 space-y-2 font-medium">
-                            <li>🌟 Start with Greetings and Phrases categories</li>
-                            <li>🗣️ Practice verb conjugations out loud</li>
-                            <li>✏️ Use sentence builders to create your own sentences</li>
-                            <li>💚 Don't worry about perfection—your effort will be appreciated!</li>
-                            <li>🎯 Try using one new phrase each time you see the family</li>
-                            <li>💾 Your progress is saved automatically—come back anytime!</li>
+                            <li>🎯 Focus on categories with lower completion rates</li>
+                            <li>🔄 Review cards you've marked as known regularly</li>
+                            <li>⏰ Spend at least 5 minutes per category for best retention</li>
+                            <li>🗣️ Practice speaking the phrases out loud!</li>
+                            <li>🏆 Earn all badges to become a master!</li>
+                            {language === 'canadian' && <li>🍁 Remember: it's aboot practice, not perfection, eh?</li>}
                         </ul>
                     </div>
                 </div>
             </div>
         );
-    };
+    }
 
-export default SpanishFlashcards;
+    const card = filteredCards[currentCard];
+
+    return (
+        <div className={`min-h-screen bg-gradient-to-br ${theme.gradient} p-4 md:p-8`}>
+            {/* Decorative pattern */}
+            <div className="fixed inset-0 opacity-10 pointer-events-none" style={{
+                backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(0,0,0,.1) 35px, rgba(0,0,0,.1) 70px)`
+            }}></div>
+
+            <div className="max-w-2xl mx-auto relative">
+                {/* Header with user info */}
+                <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+                    <div className={`bg-white rounded-full px-4 py-2 shadow-lg border-2 ${theme.accent} flex items-center gap-2`}>
+                        <User className="w-4 h-4 text-pink-500" />
+                        <span className="font-bold text-gray-800">{username}</span>
+                        <span className="text-xl ml-1">{language === 'spanish' ? '🇲🇽' : '🇨🇦'}</span>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handleLanguageSwitch(language === 'spanish' ? 'canadian' : 'spanish')}
+                            className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-purple-400 flex items-center gap-2 hover:bg-purple-50 transition font-bold text-gray-800"
+                        >
+                            <Globe className="w-4 h-4" />
+                            {language === 'spanish' ? '🇨🇦 ' : '🇲🇽 '}
+                        </button>
+                        <button
+                            onClick={() => setShowDashboard(true)}
+                            className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-blue-400 flex items-center gap-2 hover:bg-blue-50 transition font-bold text-gray-800"
+                        >
+                            <BarChart3 className="w-4 h-4" />
+                            Stats
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-red-400 flex items-center gap-2 hover:bg-red-50 transition font-bold text-gray-800"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            {language === 'spanish' ? 'Salir' : 'Peace out'}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="text-center mb-8">
+                    <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg" style={{
+                        textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+                    }}>
+                        {language === 'spanish' ? '🇲🇽 Tarjetas de Español 🇲🇽' : '🇨🇦 Canadian Flashcards, Eh? 🇨🇦'}
+                    </h1>
+                    <p className="text-white font-semibold drop-shadow">
+                        {language === 'spanish' ? 'Para conectar con la familia' : 'Learn to talk like a true Canuck'}
+                    </p>
+                </div>
+
+                {/* Category Filter */}
+                <div className="flex flex-wrap gap-2 justify-center mb-6">
+                    {categories.map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => {
+                                setFilterCategory(cat);
+                                setCurrentCard(0);
+                                setIsFlipped(false);
+                            }}
+                            className={`px-4 py-2 rounded-full text-sm font-bold transition shadow-lg ${
+                                filterCategory === cat
+                                    ? `bg-gradient-to-r ${theme.primary} text-white scale-105`
+                                    : `bg-white text-gray-800 hover:bg-yellow-100 border-2 ${theme.accent}`
+                            }`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Progress */}
+                <div className="text-center mb-4 text-sm font-semibold text-white drop-shadow">
+                    Card {currentCard + 1} of {filteredCards.length} • {knownCards.size} marked as known
+                </div>
+
+                {/* Flashcard */}
+                <div
+                    onClick={handleFlip}
+                    className={`relative rounded-3xl shadow-2xl p-8 md:p-12 mb-6 cursor-pointer transition-all hover:shadow-xl border-4 ${theme.accent}`}
+                    style={{
+                        minHeight: '350px',
+                        background: isFlipped ? theme.cardBack : theme.cardFront,
+                    }}
+                >
+                    {/* Decorative corners */}
+                    <div className="absolute top-2 left-2 text-4xl">{language === 'spanish' ? '🌺' : '🍁'}</div>
+                    <div className="absolute top-2 right-2 text-4xl">{language === 'spanish' ? '🌺' : '🍁'}</div>
+                    <div className="absolute bottom-2 left-2 text-4xl">{language === 'spanish' ? '🌸' : '🏒'}</div>
+                    <div className="absolute bottom-2 right-2 text-4xl">{language === 'spanish' ? '🌸' : '🏒'}</div>
+
+                    <div className="absolute top-4 right-16">
+            <span className={`px-3 py-1 bg-yellow-400 text-gray-900 rounded-full text-xs font-bold border-2 border-white shadow`}>
+              {card.category}
+            </span>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                        {!isFlipped ? (
+                            <div>
+                                <div className="text-7xl mb-4">{card.emoji}</div>
+                                <p className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                                    {card.front}
+                                </p>
+                                <p className="text-yellow-100 text-sm font-semibold">👆 Click to reveal</p>
+                            </div>
+                        ) : (
+                            <div>
+                                <div className="text-7xl mb-4">{card.emoji}</div>
+                                <p className="text-3xl md:text-4xl font-bold text-white mb-4 drop-shadow-lg">
+                                    {card.back}
+                                </p>
+                                {card.notes && (
+                                    <p className="text-yellow-100 text-sm font-semibold italic mt-4 max-w-md bg-black bg-opacity-20 rounded-lg p-3">
+                                        💡 {card.notes}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {knownCards.has(flashcards.findIndex(c => c === filteredCards[currentCard])) && (
+                        <div className="absolute top-4 left-16 bg-white rounded-full p-2 shadow-lg">
+                            <Check className="w-6 h-6 text-green-600" />
+                        </div>
+                    )}
+                </div>
+
+                {/* Controls */}
+                <div className="flex items-center justify-between gap-4 mb-4">
+                    <button
+                        onClick={handlePrevious}
+                        className={`flex items-center gap-2 px-6 py-3 bg-white rounded-xl shadow-lg hover:shadow-xl transition font-bold text-gray-800 border-2 ${theme.accent}`}
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                        {language === 'spanish' ? 'Anterior' : 'Back'}
+                    </button>
+
+                    <button
+                        onClick={toggleKnown}
+                        className={`px-6 py-3 rounded-xl shadow-lg transition font-bold border-2 ${
+                            knownCards.has(flashcards.findIndex(c => c === filteredCards[currentCard]))
+                                ? 'bg-green-500 text-white hover:bg-green-600 border-green-700'
+                                : 'bg-white hover:bg-yellow-100 border-yellow-400 text-gray-800'
+                        }`}
+                    >
+                        {knownCards.has(flashcards.findIndex(c => c === filteredCards[currentCard]))
+                            ? (language === 'spanish' ? '✓ ¡Lo sé!' : '✓ Got it!')
+                            : (language === 'spanish' ? 'Marcar' : 'Mark')}
+                    </button>
+
+                    <button
+                        onClick={handleNext}
+                        className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r ${theme.primary} text-white rounded-xl shadow-lg hover:shadow-xl transition font-bold border-2 border-gray-700`}
+                    >
+                        {language === 'spanish' ? 'Siguiente' : 'Next'}
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="text-center">
+                    <button
+                        onClick={resetProgress}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white hover:text-yellow-200 transition drop-shadow"
+                    >
+                        <RotateCcw className="w-4 h-4" />
+                        {language === 'spanish' ? 'Empezar de Nuevo' : 'Start Over, Eh?'}
+                    </button>
+                </div>
+
+                {/* Tips */}
+                <div className={`mt-8 bg-white rounded-2xl shadow-xl p-6 border-4 ${theme.accent}`}>
+                    <h3 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
+                        <span className="text-2xl">📖</span> Study Tips:
+                    </h3>
+                    <ul className="text-sm text-gray-700 space-y-2 font-medium">
+                        {language === 'spanish' ? (
+                            <>
+                                <li>🌟 Start with Greetings and Phrases categories</li>
+                                <li>🗣️ Practice verb conjugations out loud</li>
+                                <li>✏️ Use sentence builders to create your own sentences</li>
+                                <li>💚 Don't worry about perfection—your effort will be appreciated!</li>
+                                <li>🎯 Try using one new phrase each time you see the family</li>
+                                <li>💾 Your progress is saved automatically—come back anytime!</li>
+                            </>
+                        ) : (
+                            <>
+                                <li>🍁 Start with the Politeness category (you'll need it, eh?)</li>
+                                <li>☕ Master Tim Hortons before venturing to Winter</li>
+                                <li>🏒 Hockey knowledge is mandatory for citizenship</li>
+                                <li>❄️ Remember: there's no bad weather, just bad toques</li>
+                                <li>🦫 Practice your "sorry" - you'll say it 47 times daily</li>
+                                <li>💾 Progress saved, bud - come back for a rip!</li>
+                            </>
+                        )}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default LanguageFlashcards;
