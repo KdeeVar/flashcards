@@ -2,7 +2,7 @@
   "name": "spanish-flashcards",
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://github.com/KdeeVar/flashcards.git",
+  "homepage": "https://github.com/KdeeVar/flashcards.git/spanish-flashcards",
   "private": true,
   "engines": {
     "node": ">=20.0.0",
@@ -15,7 +15,7 @@
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
