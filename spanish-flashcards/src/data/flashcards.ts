@@ -123,3 +123,59 @@ export const canadianFlashcards: Flashcard[] = [
         { category: "Nature", front: "Maple syrup", back: "Liquid gold", notes: "Better than oil, honestly", emoji: "🍁" },
         { category: "Nature", front: "Northern Lights", back: "Sky's free light show", notes: "Nature's screensaver", emoji: "🌌" },
 ];
+
+export const italianFlashcards = [
+        // Greetings
+        { category: "Greetings", front: "Come stai?", back: "How are you? (informal)", notes: "Friends/family", emoji: "👋" },
+        { category: "Greetings", front: "Come sta?", back: "How are you? (formal)", notes: "Formal situations", emoji: "🙏" },
+        { category: "Greetings", front: "Piacere", back: "Nice to meet you", notes: "Literally 'pleasure'", emoji: "🤝" },
+        { category: "Greetings", front: "Ciao", back: "Hi / Bye", notes: "Very casual", emoji: "😊" },
+
+        // Politeness
+        { category: "Politeness", front: "Per favore", back: "Please", notes: "", emoji: "🙏" },
+        { category: "Politeness", front: "Grazie", back: "Thank you", notes: "", emoji: "😊" },
+        { category: "Politeness", front: "Prego", back: "You're welcome", notes: "Also 'go ahead'", emoji: "✨" },
+
+        // Essentials
+        { category: "Essentials", front: "Sì", back: "Yes", notes: "", emoji: "✅" },
+        { category: "Essentials", front: "No", back: "No", notes: "", emoji: "❌" },
+        { category: "Essentials", front: "Forse", back: "Maybe", notes: "", emoji: "🤔" },
+
+        // Travel
+        { category: "Travel", front: "Dove si trova…?", back: "Where is…?", notes: "Formal phrasing", emoji: "🧭" },
+        { category: "Travel", front: "Stazione", back: "Station", notes: "Train or bus", emoji: "🚉" },
+        { category: "Travel", front: "Albergo", back: "Hotel", notes: "Also 'hotel'", emoji: "🏨" },
+
+        // Food & Drink
+        { category: "Food", front: "Ho fame", back: "I am hungry", notes: "", emoji: "🍝" },
+        { category: "Food", front: "Ho sete", back: "I am thirsty", notes: "", emoji: "🥤" },
+        { category: "Food", front: "Il conto, per favore", back: "The bill, please", notes: "At restaurants", emoji: "🧾" },
+];
+
+export const germanFlashcards = [
+        // Greetings
+        { category: "Greetings", front: "Wie geht es dir?", back: "How are you? (informal)", notes: "Use with friends/family", emoji: "👋" },
+        { category: "Greetings", front: "Wie geht es Ihnen?", back: "How are you? (formal)", notes: "Formal situations", emoji: "🙏" },
+        { category: "Greetings", front: "Guten Morgen", back: "Good morning", notes: "", emoji: "☀️" },
+        { category: "Greetings", front: "Freut mich", back: "Nice to meet you", notes: "Shortened form", emoji: "🤝" },
+
+        // Politeness
+        { category: "Politeness", front: "Bitte", back: "Please / You're welcome", notes: "Context matters", emoji: "😊" },
+        { category: "Politeness", front: "Danke", back: "Thank you", notes: "", emoji: "🙏" },
+        { category: "Politeness", front: "Entschuldigung", back: "Excuse me / Sorry", notes: "Also used to get attention", emoji: "🙇" },
+
+        // Essentials
+        { category: "Essentials", front: "Ja", back: "Yes", notes: "", emoji: "✅" },
+        { category: "Essentials", front: "Nein", back: "No", notes: "", emoji: "❌" },
+        { category: "Essentials", front: "Vielleicht", back: "Maybe", notes: "", emoji: "🤔" },
+
+        // Directions & Travel
+        { category: "Travel", front: "Wo ist…?", back: "Where is…?", notes: "Useful for directions", emoji: "🧭" },
+        { category: "Travel", front: "Bahnhof", back: "Train station", notes: "", emoji: "🚉" },
+        { category: "Travel", front: "Hotel", back: "Hotel", notes: "Same word", emoji: "🏨" },
+
+        // Food & Drink
+        { category: "Food", front: "Ich habe Hunger", back: "I am hungry", notes: "", emoji: "🍽️" },
+        { category: "Food", front: "Ich habe Durst", back: "I am thirsty", notes: "", emoji: "🥤" },
+        { category: "Food", front: "Die Rechnung, bitte", back: "The bill, please", notes: "At restaurants", emoji: "🧾" },
+];

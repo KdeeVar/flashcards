@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, RotateCcw, Check, LogOut, User, BarChart3, Clock, Trophy, Globe } from 'lucide-react';
-import {spanishFlashcards, canadianFlashcards} from './data/flashcards.ts';
+import { ChevronLeft, ChevronRight, RotateCcw, Check, LogOut, User, BarChart3, Clock, Trophy } from 'lucide-react';
+import {spanishFlashcards, canadianFlashcards, italianFlashcards, germanFlashcards} from './data/flashcards.ts';
 
-type Language = 'spanish' | 'canadian';
+type Language = 'spanish' | 'canadian' | 'italian' | 'german';
 
 const LanguageFlashcards = () => {
     // LocalStorage wrapper for compatibility
@@ -36,7 +36,21 @@ const LanguageFlashcards = () => {
     const [currentCategoryStart, setCurrentCategoryStart] = useState(Date.now());
     const [isLoadingProgress, setIsLoadingProgress] = useState(false);
 
-    const flashcards = language === 'spanish' ? spanishFlashcards : canadianFlashcards;
+    let flashcards;
+    switch (language) {
+        case 'spanish':
+            flashcards = spanishFlashcards;
+            break;
+        case 'canadian':
+            flashcards = canadianFlashcards;
+            break;
+        case 'italian':
+            flashcards = italianFlashcards;
+            break;
+        case 'german':
+            flashcards = germanFlashcards;
+            break;
+    }
     const categories = ["All", ...new Set(flashcards.map(card => card.category))];
 
     const filteredCards = filterCategory === "All"
@@ -276,8 +290,10 @@ const LanguageFlashcards = () => {
                 accent: 'border-yellow-400',
                 cardFront: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                 cardBack: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                emoji1: '🌺',
+                emoji2: '🌸',
             };
-        } else {
+        } else if (language === 'canadian') {
             return {
                 gradient: 'from-red-600 via-white to-red-600',
                 primary: 'from-red-600 to-red-800',
@@ -285,6 +301,30 @@ const LanguageFlashcards = () => {
                 accent: 'border-red-600',
                 cardFront: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
                 cardBack: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+                emoji1: '🍁',
+                emoji2: '🏒',
+            };
+        } else if (language === 'italian') {
+            return {
+                gradient: 'from-green-600 via-white to-red-600',
+                primary: 'from-green-600 to-green-800',
+                secondary: 'from-red-500 to-red-700',
+                accent: 'border-green-600',
+                cardFront: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                cardBack: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+                emoji1: '🍝',
+                emoji2: '🍕',
+            };
+        } else {
+            return {
+                gradient: 'from-black via-red-600 to-yellow-500',
+                primary: 'from-red-600 to-yellow-500',
+                secondary: 'from-gray-700 to-black',
+                accent: 'border-yellow-500',
+                cardFront: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)',
+                cardBack: 'linear-gradient(135deg, #dc2626 0%, #fbbf24 100%)',
+                emoji1: '🍺',
+                emoji2: '🥨',
             };
         }
     };
@@ -292,9 +332,13 @@ const LanguageFlashcards = () => {
     const theme = getThemeColors();
 
     if (isLoading) {
+        const loadingEmoji = language === 'spanish' ? '🌮'
+            : language === 'canadian' ? '🍁'
+                : language === 'italian' ? '🍝'
+                    : '🍺';
         return (
             <div className={`min-h-screen bg-gradient-to-br ${theme.gradient} flex items-center justify-center`}>
-                <div className="text-4xl">{language === 'spanish' ? '🌮' : '🍁'} Loading...</div>
+                <div className="text-4xl">{loadingEmoji} Loading...</div>
             </div>
         );
     }
@@ -343,6 +387,24 @@ const LanguageFlashcards = () => {
                             </button>
 
                             <button
+                                onClick={() => handleLogin('italian')}
+                                disabled={!inputUsername.trim()}
+                                className="w-full bg-gradient-to-r from-green-600 via-white to-red-600 text-gray-800 font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 border-2 border-green-600"
+                            >
+                                <span className="text-2xl">🇮🇹</span>
+                                <span>Italian - Andiamo!</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleLogin('german')}
+                                disabled={!inputUsername.trim()}
+                                className="w-full bg-gradient-to-r from-black via-red-600 to-yellow-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                            >
+                                <span className="text-2xl">🇩🇪</span>
+                                <span>German - Los geht's!</span>
+                            </button>
+
+                            <button
                                 onClick={() => handleLogin('canadian')}
                                 disabled={!inputUsername.trim()}
                                 className="w-full bg-gradient-to-r from-red-600 via-white to-red-600 text-gray-800 font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 border-2 border-red-600"
@@ -373,12 +435,12 @@ const LanguageFlashcards = () => {
 
         const badges = [
             { id: 'beginner', name: 'First Steps', emoji: '🌱', requirement: 'Mark your first card as known', earned: knownCards.size >= 1 },
-            { id: 'studious', name: language === 'spanish' ? 'Estudioso' : 'Keener', emoji: '📚', requirement: 'Mark 10 cards as known', earned: knownCards.size >= 10 },
-            { id: 'dedicated', name: language === 'spanish' ? 'Dedicado' : 'Beauty', emoji: '⭐', requirement: 'Mark 25 cards as known', earned: knownCards.size >= 25 },
+            { id: 'studious', name: language === 'spanish' ? 'Estudioso' : language === 'canadian' ? 'Keener' : language === 'italian' ? 'Studioso' : 'Fleißig', emoji: '📚', requirement: 'Mark 10 cards as known', earned: knownCards.size >= 10 },
+            { id: 'dedicated', name: language === 'spanish' ? 'Dedicado' : language === 'canadian' ? 'Beauty' : language === 'italian' ? 'Dedicato' : 'Engagiert', emoji: '⭐', requirement: 'Mark 25 cards as known', earned: knownCards.size >= 25 },
             { id: 'category-master', name: 'Category Master', emoji: '🏆', requirement: 'Complete any category 100%', earned: completedCategories >= 1 },
-            { id: 'polyglot', name: language === 'spanish' ? 'Políglota' : 'True North', emoji: '🌟', requirement: 'Complete 3 categories', earned: completedCategories >= 3 },
+            { id: 'polyglot', name: language === 'spanish' ? 'Políglota' : language === 'canadian' ? 'True North' : language === 'italian' ? 'Poliglotta' : 'Polyglott', emoji: '🌟', requirement: 'Complete 3 categories', earned: completedCategories >= 3 },
             { id: 'time-warrior', name: 'Time Warrior', emoji: '⏰', requirement: 'Study for 10+ minutes total', earned: Object.values(categoryTime).reduce((a, b) => a + b, 0) >= 600 },
-            { id: 'perfectionist', name: language === 'spanish' ? 'Perfeccionista' : 'Hoser Hero', emoji: '💎', requirement: 'Complete ALL categories 100%', earned: completedCategories === totalCategories && totalCategories > 0 },
+            { id: 'perfectionist', name: language === 'spanish' ? 'Perfeccionista' : language === 'canadian' ? 'Hoser Hero' : language === 'italian' ? 'Perfezionista' : 'Perfektionist', emoji: '💎', requirement: 'Complete ALL categories 100%', earned: completedCategories === totalCategories && totalCategories > 0 },
             { id: 'speed-learner', name: 'Speed Learner', emoji: '⚡', requirement: 'Complete 50% in under 30 mins', earned: overallProgress.percentage >= 50 && Object.values(categoryTime).reduce((a, b) => a + b, 0) < 1800 },
         ];
 
@@ -397,16 +459,21 @@ const LanguageFlashcards = () => {
                         <div className="bg-white rounded-full px-4 py-2 shadow-lg border-2 ${theme.accent} flex items-center gap-2">
                             <User className="w-4 h-4 text-pink-500" />
                             <span className="font-bold text-gray-800">{username}</span>
-                            <span className="text-2xl ml-2">{language === 'spanish' ? '🇲🇽' : '🇨🇦'}</span>
+                            <span className="text-2xl ml-2">
+                {language === 'spanish' ? '🇲🇽' : language === 'canadian' ? '🇨🇦' : language === 'italian' ? '🇮🇹' : '🇩🇪'}
+              </span>
                         </div>
                         <div className="flex gap-2">
-                            <button
-                                onClick={() => handleLanguageSwitch(language === 'spanish' ? 'canadian' : 'spanish')}
-                                className={`bg-white rounded-full px-4 py-2 shadow-lg border-2 border-purple-400 flex items-center gap-2 hover:bg-purple-50 transition font-bold text-gray-800`}
+                            <select
+                                value={language}
+                                onChange={(e) => handleLanguageSwitch(e.target.value as Language)}
+                                className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-purple-400 font-bold text-gray-800 cursor-pointer hover:bg-purple-50 transition"
                             >
-                                <Globe className="w-4 h-4" />
-                                {language === 'spanish' ? '🇨🇦' : '🇲🇽'}
-                            </button>
+                                <option value="spanish">🇲🇽 Spanish</option>
+                                <option value="italian">🇮🇹 Italian</option>
+                                <option value="german">🇩🇪 German</option>
+                                <option value="canadian">🇨🇦 Canadian</option>
+                            </select>
                             <button
                                 onClick={() => setShowDashboard(false)}
                                 className={`bg-white rounded-full px-4 py-2 shadow-lg border-2 border-green-400 flex items-center gap-2 hover:bg-green-50 transition font-bold text-gray-800`}
@@ -419,10 +486,16 @@ const LanguageFlashcards = () => {
                     <div className="text-center mb-8">
                         <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg flex items-center justify-center gap-3">
                             <BarChart3 className="w-10 h-10" />
-                            {language === 'spanish' ? 'Tu Progreso' : 'Your Progress, Eh?'}
+                            {language === 'spanish' ? 'Tu Progreso'
+                                : language === 'canadian' ? 'Your Progress, Eh?'
+                                    : language === 'italian' ? 'I Tuoi Progressi'
+                                        : 'Dein Fortschritt'}
                         </h1>
                         <p className="text-white font-semibold drop-shadow">
-                            {language === 'spanish' ? 'Your Learning Dashboard' : 'How ya doin, bud?'}
+                            {language === 'spanish' ? 'Your Learning Dashboard'
+                                : language === 'canadian' ? 'How ya doin, bud?'
+                                    : language === 'italian' ? 'Il Tuo Pannello di Apprendimento'
+                                        : 'Dein Lern-Dashboard'}
                         </p>
                     </div>
 
@@ -503,10 +576,16 @@ const LanguageFlashcards = () => {
                         {earnedBadges.length === badges.length && (
                             <div className={`mt-4 bg-gradient-to-r ${theme.primary} text-white rounded-xl p-4 text-center`}>
                                 <p className="text-2xl font-bold">
-                                    {language === 'spanish' ? '🎊 ¡Felicidades! You\'ve earned all badges! 🎊' : '🎊 Beauty! You got all the badges, eh? 🎊'}
+                                    {language === 'spanish' ? '🎊 ¡Felicidades! You\'ve earned all badges! 🎊'
+                                        : language === 'canadian' ? '🎊 Beauty! You got all the badges, eh? 🎊'
+                                            : language === 'italian' ? '🎊 Fantastico! Hai guadagnato tutti i badge! 🎊'
+                                                : '🎊 Ausgezeichnet! Du hast alle Abzeichen! 🎊'}
                                 </p>
                                 <p className="text-sm mt-1">
-                                    {language === 'spanish' ? 'You\'re a Spanish learning champion!' : 'You\'re a true Canadian, bud!'}
+                                    {language === 'spanish' ? 'You\'re a Spanish learning champion!'
+                                        : language === 'canadian' ? 'You\'re a true Canadian, bud!'
+                                            : language === 'italian' ? 'Sei un campione dell\'apprendimento italiano!'
+                                                : 'Du bist ein Deutsch-Lern-Champion!'}
                                 </p>
                             </div>
                         )}
@@ -560,7 +639,7 @@ const LanguageFlashcards = () => {
                     {/* Study Tips */}
                     <div className={`bg-white rounded-2xl shadow-xl p-6 border-4 ${theme.accent}`}>
                         <h3 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
-                            <span className="text-2xl">💡</span> {language === 'spanish' ? 'Keep Going!' : 'Keep at \'er!'}
+                            <span className="text-2xl">💡</span> {language === 'spanish' ? 'Keep Going!' : language === 'canadian' ? 'Keep at \'er!' : language === 'italian' ? 'Continua così!' : 'Weiter so!'}
                         </h3>
                         <ul className="text-sm text-gray-700 space-y-2 font-medium">
                             <li>🎯 Focus on categories with lower completion rates</li>
@@ -569,6 +648,8 @@ const LanguageFlashcards = () => {
                             <li>🗣️ Practice speaking the phrases out loud!</li>
                             <li>🏆 Earn all badges to become a master!</li>
                             {language === 'canadian' && <li>🍁 Remember: it's aboot practice, not perfection, eh?</li>}
+                            {language === 'italian' && <li>🍝 Practice with passion, like making pasta!</li>}
+                            {language === 'german' && <li>🍺 Consistency and precision lead to success!</li>}
                         </ul>
                     </div>
                 </div>
@@ -591,16 +672,21 @@ const LanguageFlashcards = () => {
                     <div className={`bg-white rounded-full px-4 py-2 shadow-lg border-2 ${theme.accent} flex items-center gap-2`}>
                         <User className="w-4 h-4 text-pink-500" />
                         <span className="font-bold text-gray-800">{username}</span>
-                        <span className="text-xl ml-1">{language === 'spanish' ? '🇲🇽' : '🇨🇦'}</span>
+                        <span className="text-xl ml-1">
+              {language === 'spanish' ? '🇲🇽' : language === 'canadian' ? '🇨🇦' : language === 'italian' ? '🇮🇹' : '🇩🇪'}
+            </span>
                     </div>
                     <div className="flex gap-2">
-                        <button
-                            onClick={() => handleLanguageSwitch(language === 'spanish' ? 'canadian' : 'spanish')}
-                            className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-purple-400 flex items-center gap-2 hover:bg-purple-50 transition font-bold text-gray-800"
+                        <select
+                            value={language}
+                            onChange={(e) => handleLanguageSwitch(e.target.value as Language)}
+                            className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-purple-400 font-bold text-gray-800 cursor-pointer hover:bg-purple-50 transition"
                         >
-                            <Globe className="w-4 h-4" />
-                            {language === 'spanish' ? '🇨🇦 ' : '🇲🇽 '}
-                        </button>
+                            <option value="spanish">🇲🇽 Spanish</option>
+                            <option value="italian">🇮🇹 Italian</option>
+                            <option value="german">🇩🇪 German</option>
+                            <option value="canadian">🇨🇦 Canadian</option>
+                        </select>
                         <button
                             onClick={() => setShowDashboard(true)}
                             className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-blue-400 flex items-center gap-2 hover:bg-blue-50 transition font-bold text-gray-800"
@@ -613,7 +699,7 @@ const LanguageFlashcards = () => {
                             className="bg-white rounded-full px-4 py-2 shadow-lg border-2 border-red-400 flex items-center gap-2 hover:bg-red-50 transition font-bold text-gray-800"
                         >
                             <LogOut className="w-4 h-4" />
-                            {language === 'spanish' ? 'Salir' : 'Peace out'}
+                            {language === 'spanish' ? 'Salir' : language === 'canadian' ? 'Peace out' : language === 'italian' ? 'Uscita' : 'Ausgang'}
                         </button>
                     </div>
                 </div>
@@ -622,10 +708,16 @@ const LanguageFlashcards = () => {
                     <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg" style={{
                         textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
                     }}>
-                        {language === 'spanish' ? '🇲🇽 Tarjetas de Español 🇲🇽' : '🇨🇦 Canadian Flashcards, Eh? 🇨🇦'}
+                        {language === 'spanish' ? '🇲🇽 Tarjetas de Español 🇲🇽'
+                            : language === 'canadian' ? '🇨🇦 Canadian Flashcards, Eh? 🇨🇦'
+                                : language === 'italian' ? '🇮🇹 Flashcard Italiane 🇮🇹'
+                                    : '🇩🇪 Deutsche Lernkarten 🇩🇪'}
                     </h1>
                     <p className="text-white font-semibold drop-shadow">
-                        {language === 'spanish' ? 'Para conectar con la familia' : 'Learn to talk like a true Canuck'}
+                        {language === 'spanish' ? 'Para conectar con la familia'
+                            : language === 'canadian' ? 'Learn to talk like a true Canuck'
+                                : language === 'italian' ? 'Impara a parlare come un italiano'
+                                    : 'Lerne wie ein echter Deutscher'}
                     </p>
                 </div>
 
@@ -665,10 +757,10 @@ const LanguageFlashcards = () => {
                     }}
                 >
                     {/* Decorative corners */}
-                    <div className="absolute top-2 left-2 text-4xl">{language === 'spanish' ? '🌺' : '🍁'}</div>
-                    <div className="absolute top-2 right-2 text-4xl">{language === 'spanish' ? '🌺' : '🍁'}</div>
-                    <div className="absolute bottom-2 left-2 text-4xl">{language === 'spanish' ? '🌸' : '🏒'}</div>
-                    <div className="absolute bottom-2 right-2 text-4xl">{language === 'spanish' ? '🌸' : '🏒'}</div>
+                    <div className="absolute top-2 left-2 text-4xl">{theme.emoji1}</div>
+                    <div className="absolute top-2 right-2 text-4xl">{theme.emoji1}</div>
+                    <div className="absolute bottom-2 left-2 text-4xl">{theme.emoji2}</div>
+                    <div className="absolute bottom-2 right-2 text-4xl">{theme.emoji2}</div>
 
                     <div className="absolute top-4 right-16">
             <span className={`px-3 py-1 bg-yellow-400 text-gray-900 rounded-full text-xs font-bold border-2 border-white shadow`}>
@@ -726,15 +818,15 @@ const LanguageFlashcards = () => {
                         }`}
                     >
                         {knownCards.has(flashcards.findIndex(c => c === filteredCards[currentCard]))
-                            ? (language === 'spanish' ? '✓ ¡Lo sé!' : '✓ Got it!')
-                            : (language === 'spanish' ? 'Marcar' : 'Mark')}
+                            ? (language === 'spanish' ? '✓ ¡Lo sé!' : language === 'canadian' ? '✓ Got it!' : language === 'italian' ? '✓ Lo so!' : '✓ Verstanden!')
+                            : (language === 'spanish' ? 'Marcar' : language === 'canadian' ? 'Mark' : language === 'italian' ? 'Segna' : 'Markieren')}
                     </button>
 
                     <button
                         onClick={handleNext}
                         className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r ${theme.primary} text-white rounded-xl shadow-lg hover:shadow-xl transition font-bold border-2 border-gray-700`}
                     >
-                        {language === 'spanish' ? 'Siguiente' : 'Next'}
+                        {language === 'spanish' ? 'Siguiente' : language === 'canadian' ? 'Next' : language === 'italian' ? 'Prossimo' : 'Weiter'}
                         <ChevronRight className="w-5 h-5" />
                     </button>
                 </div>
@@ -745,7 +837,7 @@ const LanguageFlashcards = () => {
                         className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white hover:text-yellow-200 transition drop-shadow"
                     >
                         <RotateCcw className="w-4 h-4" />
-                        {language === 'spanish' ? 'Empezar de Nuevo' : 'Start Over, Eh?'}
+                        {language === 'spanish' ? 'Empezar de Nuevo' : language === 'canadian' ? 'Start Over, Eh?' : language === 'italian' ? 'Ricomincia' : 'Neu Starten'}
                     </button>
                 </div>
 
@@ -764,7 +856,7 @@ const LanguageFlashcards = () => {
                                 <li>🎯 Try using one new phrase each time you see the family</li>
                                 <li>💾 Your progress is saved automatically—come back anytime!</li>
                             </>
-                        ) : (
+                        ) : language === 'canadian' ? (
                             <>
                                 <li>🍁 Start with the Politeness category (you'll need it, eh?)</li>
                                 <li>☕ Master Tim Hortons before venturing to Winter</li>
@@ -772,6 +864,24 @@ const LanguageFlashcards = () => {
                                 <li>❄️ Remember: there's no bad weather, just bad toques</li>
                                 <li>🦫 Practice your "sorry" - you'll say it 47 times daily</li>
                                 <li>💾 Progress saved, bud - come back for a rip!</li>
+                            </>
+                        ) : language === 'italian' ? (
+                            <>
+                                <li>🍝 Start with Greetings (Saluti) and Food (Cibo)</li>
+                                <li>☕ Never order cappuccino after 11am - this is serious!</li>
+                                <li>🗣️ Speak with passion and use hand gestures</li>
+                                <li>👨‍👩‍👧‍👦 Family words are essential in Italian culture</li>
+                                <li>🍕 Practice food words - Italians love talking about food!</li>
+                                <li>💾 Il tuo progresso è salvato automaticamente!</li>
+                            </>
+                        ) : (
+                            <>
+                                <li>🍺 Start with Greetings (Grüße) and Polite Phrases</li>
+                                <li>🥨 Food and drink vocabulary is culturally important</li>
+                                <li>🗣️ German pronunciation is precise - practice carefully</li>
+                                <li>📚 Compound words are a German specialty - embrace them!</li>
+                                <li>⏰ Consistency (Pünktlichkeit) in practice is key</li>
+                                <li>💾 Dein Fortschritt wird automatisch gespeichert!</li>
                             </>
                         )}
                     </ul>
