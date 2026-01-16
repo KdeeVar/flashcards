@@ -1,0 +1,4 @@
+/* This file is used to import Tailwind CSS styles into the project */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
