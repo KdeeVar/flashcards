@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, RotateCcw, Check, LogOut, User, BarChart3, Clock, Trophy, Globe } from 'lucide-react';
 import {spanishFlashcards, canadianFlashcards} from './data/flashcards.ts';
 
@@ -32,7 +32,7 @@ const LanguageFlashcards = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [showDashboard, setShowDashboard] = useState(false);
     const [categoryTime, setCategoryTime] = useState<Record<string, number>>({});
-    const [sessionStart, setSessionStart] = useState(Date.now());
+    //const [sessionStart, setSessionStart] = useState(Date.now());
     const [currentCategoryStart, setCurrentCategoryStart] = useState(Date.now());
     const [isLoadingProgress, setIsLoadingProgress] = useState(false);
 
@@ -319,7 +319,7 @@ const LanguageFlashcards = () => {
                                 type="text"
                                 value={inputUsername}
                                 onChange={(e) => setInputUsername(e.target.value)}
-                                onKeyPress={(e) => {
+                                onKeyUp={(e) => {
                                     if (e.key === 'Enter' && inputUsername.trim()) {
                                         // Default to Spanish on Enter
                                         handleLogin('spanish');
